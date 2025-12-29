@@ -1,0 +1,131 @@
+type: custom:mushroom-entity-card
+entity: sensor.prusa_core_one_progress
+tap_action:
+  action: more-info
+icon: mdi:printer-3d-nozzle
+icon_color: purple
+name: 3D Printer
+hold_action:
+  action: none
+double_tap_action:
+  action: none
+card_mod:
+  style:
+    .: |
+      ha-card {
+        /* ================= USER SETTINGS ================= */
+        {% set max_val = 100 %}
+        /* ================================================= */
+
+        /* --- STATE / LOGIC --- */
+        {% set raw = states(config.entity) %}
+        {% set is_unavailable = raw in ['unavailable','unknown','none','None',''] %}
+
+        {% set val = 0 if is_unavailable else (raw | float(0)) %}
+        {% set active = (not is_unavailable) and (val > 0) and (val < max_val) %}
+
+        /* Calculate Percentage Width */
+        {% set width_pct = (val / max_val * 100) | round(2) if not is_unavailable else 0 %}
+        {% if width_pct > 100 %}{% set width_pct = 100 %}{% endif %}
+
+        /* --- CSS VARIABLES --- */
+        --bar-width: {{ width_pct }}%;
+        --bar-opacity: {{ 1 if active else 0 }};
+
+        /* Icon Variables */
+        --custom-icon-anim: {{ 'printer-sequence 2.3s linear infinite' if active else 'none' }};
+        --custom-icon-shadow: {{ '0 0 10px 5px rgba(var(--rgb-' ~ config.icon_color ~ '), 0.6)' if active else 'none' }};
+        --custom-icon-opacity: {{ '1' if not is_unavailable else '0.55' }};
+
+        /* --- DISABLED LOOK (when unavailable/unknown) --- */
+        {% if is_unavailable %}
+          opacity: 0.55 !important;
+          filter: grayscale(1) saturate(0) !important;
+          pointer-events: none !important;   /* disables click */
+          cursor: not-allowed !important;
+          background-image: none !important;
+          box-shadow: none !important;
+        {% endif %}
+
+        /* --- CARD STYLING LOGIC --- */
+        /* Only apply the dark custom background if ACTIVE. Otherwise, use default theme. */
+        {% if active %}
+          background-color: #1c1c1c !important;
+          border: none !important;
+
+          /* Ambient Glow */
+          background-image: radial-gradient(circle at 24px 24px, rgba(var(--rgb-{{ config.icon_color }}), 0.35) 0%, rgba(var(--rgb-{{ config.icon_color }}), 0.1) 40%, transparent 80%),
+                            linear-gradient(to right, rgba(255,255,255,0.1), rgba(255,255,255,0.1)) !important;
+        {% else %}
+          /* When Idle/Unavailable: Reset to defaults (no custom BG color, standard border behavior if any) */
+          background-image: none !important;
+          box-shadow: none !important;
+          /* We don't set background-color here, letting the theme take over */
+        {% endif %}
+
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.5s ease;
+        background-size: 100% 100%, 100% 6px !important;
+        background-position: top left, bottom left !important;
+        background-repeat: no-repeat !important;
+      }
+
+      /* --- ACTIVE PROGRESS BAR (BEAM) --- */
+      ha-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0;
+        height: 6px;
+        width: var(--bar-width);
+
+        background: linear-gradient(90deg,
+          rgba(var(--rgb-{{ config.icon_color }}), 0.4) 0%,
+          rgba(var(--rgb-{{ config.icon_color }}), 1) 100%
+        );
+
+        box-shadow: 0 -2px 10px rgba(var(--rgb-{{ config.icon_color }}), 0.8);
+        opacity: var(--bar-opacity);
+        transition: width 0.5s ease-out, opacity 0.5s ease;
+        animation: bar-flow 2s infinite linear;
+        pointer-events: none;
+      }
+
+      @keyframes bar-flow {
+        0% { filter: brightness(1); }
+        50% { filter: brightness(1.3); }
+        100% { filter: brightness(1); }
+      }
+
+      mushroom-shape-icon {
+        --icon-size: 65px;
+        display: flex;
+        margin: -20px 0 10px -20px !important;
+        padding-right: 15px;
+        padding-bottom: 15px;
+      }
+    mushroom-shape-icon$: |
+      .shape {
+        --shape-animation: var(--custom-icon-anim) !important;
+        box-shadow: var(--custom-icon-shadow) !important;
+        opacity: var(--custom-icon-opacity) !important;
+        transform-origin: 50% 80%;
+      }
+
+      @keyframes printer-sequence {
+        0%   { transform: translate(-5px, 4px) scale(0.96); }
+        15%  { transform: translate(5px, 4px) scale(0.96); }
+        16%  { transform: translate(5px, 2px) scale(0.98); }
+        30%  { transform: translate(-5px, 2px) scale(0.98); }
+        31%  { transform: translate(-5px, 0px) scale(1); }
+        45%  { transform: translate(5px, 0px) scale(1); }
+        46%  { transform: translate(5px, -2px) scale(1.02); }
+        60%  { transform: translate(-5px, -2px) scale(1.02); }
+        61%  { transform: translate(-5px, -4px) scale(1.04); }
+        80%  { transform: translate(5px, -4px) scale(1.04); }
+        100% { transform: translate(-5px, 4px) scale(0.96); }
+      }
+grid_options:
+  columns: 12
+  rows: 1
