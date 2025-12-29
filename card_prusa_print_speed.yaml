@@ -43,6 +43,10 @@ card_mod:
         --bar-opacity: {{ 1 if active else 0 }};
         --done-opacity: {{ 1 if is_done else 0 }};
 
+        /* Icon/shape farver (grå når ikke aktiv) */
+        --icon-fg: {{ 'rgb(var(--rgb-' ~ config.icon_color ~ '))' if active else 'var(--disabled-text-color)' }};
+        --shape-bg: {{ 'rgba(var(--rgb-' ~ config.icon_color ~ '), 0.20)' if active else 'rgba(128, 128, 128, 0.18)' }};
+
         /* Icon Variables */
         --custom-icon-anim: {{ 'printer-sequence 2.2s cubic-bezier(.45,0,.55,1) infinite' if active else 'none' }};
         --custom-icon-shadow: {{ '0 0 10px 5px rgba(var(--rgb-' ~ config.icon_color ~ '), 0.6)' if active else 'none' }};
@@ -141,6 +145,25 @@ card_mod:
         opacity: var(--custom-icon-opacity) !important;
         transform-origin: 50% 80%;
         will-change: transform;
+        background-color: var(--shape-bg) !important;
+        /* Sæt også variablen her (nogle temaer læser den herfra) */
+        --icon-color: var(--icon-fg) !important;
+      }
+
+      /* Tving ikonfarve til grå når ikke aktiv (Mushroom kan ellers holde fast i icon_color) */
+      mushroom-shape-icon {
+        --icon-color: var(--icon-fg) !important;
+        --mush-icon-color: var(--icon-fg) !important;
+      }
+
+      ha-state-icon,
+      ha-state-icon ha-icon,
+      ha-state-icon ha-icon svg,
+      ha-state-icon svg,
+      ha-icon,
+      ha-icon svg {
+        color: var(--icon-fg) !important;
+        fill: var(--icon-fg) !important;
       }
 
       /* === FLYDENDE SIDE-TIL-SIDE ±25px (samme navn som før) === */
